@@ -1,0 +1,79 @@
+# Cloud Build configuration for building all Docker images
+# This allows building without local Docker
+
+steps:
+  # Build Backend
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/ai-sre-agent/backend:${_VERSION}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/ai-sre-agent/backend:latest'
+      - '-f'
+      - 'backend/Dockerfile'
+      - 'backend/'
+    id: 'build-backend'
+
+  # Build AI Engine
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/ai-sre-agent/ai-engine:${_VERSION}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/ai-sre-agent/ai-engine:latest'
+      - '-f'
+      - 'ai-engine/Dockerfile'
+      - 'ai-engine/'
+    id: 'build-ai-engine'
+
+  # Build Collector
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/ai-sre-agent/collector:${_VERSION}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/ai-sre-agent/collector:latest'
+      - '-f'
+      - 'collector/Dockerfile'
+      - 'collector/'
+    id: 'build-collector'
+
+  # Build Executor
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/ai-sre-agent/executor:${_VERSION}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/ai-sre-agent/executor:latest'
+      - '-f'
+      - 'executor/Dockerfile'
+      - 'executor/'
+    id: 'build-executor'
+
+# Push all images
+images:
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/ai-sre-agent/backend:${_VERSION}'
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/ai-sre-agent/backend:latest'
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/ai-sre-agent/ai-engine:${_VERSION}'
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/ai-sre-agent/ai-engine:latest'
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/ai-sre-agent/collector:${_VERSION}'
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/ai-sre-agent/collector:latest'
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/ai-sre-agent/executor:${_VERSION}'
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/ai-sre-agent/executor:latest'
+
+# Substitution variables
+substitutions:
+  _REGION: 'us-central1'
+  _VERSION: 'v1.0.0'
+
+# Build options
+options:
+  machineType: 'N1_HIGHCPU_8'  # Faster builds
+  logging: CLOUD_LOGGING_ONLY
+
+# Timeout: 30 minutes (well within free tier)
+timeout: 1800s

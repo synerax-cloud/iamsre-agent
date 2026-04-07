@@ -12,14 +12,14 @@ import logging
 import sys
 from typing import List, Optional
 
-from app.api.v1 import router as api_v1_router
+from app.api.v1.router import router as api_v1_router
 from app.core.config import settings
 from app.core.logging_config import setup_logging
 from app.middleware.auth import AuthMiddleware
 from app.middleware.rate_limit import RateLimitMiddleware
 from app.middleware.request_id import RequestIDMiddleware
 from app.db.database import engine, Base, get_db
-from app.core.metrics import metrics_middleware, PrometheusMiddleware
+from app.core.metrics import PrometheusMiddleware
 
 # Setup logging
 setup_logging()
@@ -130,8 +130,9 @@ async def liveness_check():
 @app.get("/metrics", tags=["Monitoring"])
 async def metrics():
     """Prometheus metrics endpoint"""
-    from app.core.metrics import get_metrics
-    return get_metrics()
+    from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+    from starlette.responses import Response
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
 # Include API v1 router

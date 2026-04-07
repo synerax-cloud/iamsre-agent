@@ -24,10 +24,14 @@ terraform {
   }
 
   # Backend configuration for state storage
-  backend "gcs" {
-    bucket = "ai-sre-agent-terraform-state"  # Update with your bucket name
-    prefix = "terraform/state"
-  }
+  # For initial deployment, using local state (comment out for production)
+  # To use remote state, create GCS bucket first:
+  # gcloud storage buckets create gs://ai-sre-agent-terraform-state-${PROJECT_ID} --location=us-central1
+  # Then uncomment below:
+  # backend "gcs" {
+  #   bucket = "ai-sre-agent-terraform-state-${PROJECT_ID}"
+  #   prefix = "terraform/state"
+  # }
 }
 
 # Provider Configuration

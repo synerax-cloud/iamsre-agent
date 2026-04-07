@@ -48,6 +48,12 @@ gcloud config set project $PROJECT_ID
 log_info "STEP 1: Deploying Terraform Infrastructure..."
 cd terraform
 
+# Clean any previous state if needed
+if [ -d .terraform ]; then
+    log_warn "Found existing Terraform state, cleaning up..."
+    rm -rf .terraform .terraform.lock.hcl
+fi
+
 if [ ! -f terraform.tfvars ]; then
     log_info "Creating terraform.tfvars..."
     cat > terraform.tfvars <<EOF

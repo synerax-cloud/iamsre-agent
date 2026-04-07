@@ -66,6 +66,7 @@ variable "jwt_secret" {
   description = "JWT secret key for authentication"
   type        = string
   sensitive   = true
+  default     = ""  # Will be auto-generated if not provided
 }
 
 variable "domain_name" {

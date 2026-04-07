@@ -21,6 +21,10 @@ terraform {
       source  = "hashicorp/helm"
       version = "~> 2.11"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.5"
+    }
   }
 
   # Backend configuration for state storage
@@ -158,7 +162,8 @@ module "gke" {
   # Security features
   enable_shielded_nodes       = true
   enable_binary_authorization = false
-  enable_pod_security_policy  = false
+  # Note: PodSecurityPolicy is deprecated in Kubernetes 1.25+
+  # Use Pod Security Standards instead
 
   # Networking
   network_policy             = true
@@ -461,6 +466,12 @@ resource "google_secret_manager_secret_version" "openai_api_key" {
   secret_data = var.openai_api_key
 }
 
+# Auto-generate JWT secret if not provided
+resource "random_password" "jwt_secret" {
+  length  = 64
+  special = true
+}
+
 resource "google_secret_manager_secret" "jwt_secret" {
   secret_id = "${var.cluster_name}-jwt-secret"
   
@@ -471,7 +482,7 @@ resource "google_secret_manager_secret" "jwt_secret" {
 
 resource "google_secret_manager_secret_version" "jwt_secret" {
   secret      = google_secret_manager_secret.jwt_secret.id
-  secret_data = var.jwt_secret
+  secret_data = var.jwt_secret != "" ? var.jwt_secret : random_password.jwt_secret.result
 }
 
 # Grant secret access to service accounts

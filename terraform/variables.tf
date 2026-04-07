@@ -53,6 +53,7 @@ variable "db_password" {
   description = "Password for the Cloud SQL database"
   type        = string
   sensitive   = true
+  default     = ""  # Will be auto-generated if not provided
 }
 
 variable "openai_api_key" {

@@ -21,12 +21,7 @@ resource "google_compute_router_nat" "nat" {
   source_subnetwork_ip_ranges_to_nat = var.source_subnetwork_ip_ranges_to_nat
 
   # Static IPs for NAT (optional)
-  dynamic "nat_ips" {
-    for_each = var.nat_ips
-    content {
-      name = nat_ips.value
-    }
-  }
+  nat_ips = var.nat_ips
 
   # Logging configuration
   log_config {

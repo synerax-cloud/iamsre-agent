@@ -302,7 +302,7 @@ module "cloudsql" {
   users = [
     {
       name     = "app_user"
-      password = var.db_password
+      password = var.db_password != "" ? var.db_password : random_password.db_password.result
     }
   ]
 
@@ -436,6 +436,13 @@ module "iam" {
 }
 
 # Secret Manager secrets
+
+# Auto-generate database password if not provided
+resource "random_password" "db_password" {
+  length  = 32
+  special = true
+}
+
 resource "google_secret_manager_secret" "db_password" {
   secret_id = "${var.cluster_name}-db-password"
   
@@ -446,7 +453,7 @@ resource "google_secret_manager_secret" "db_password" {
 
 resource "google_secret_manager_secret_version" "db_password" {
   secret      = google_secret_manager_secret.db_password.id
-  secret_data = var.db_password
+  secret_data = var.db_password != "" ? var.db_password : random_password.db_password.result
 }
 
 resource "google_secret_manager_secret" "openai_api_key" {

@@ -1,0 +1,63 @@
+# HPA for Backend
+{{- if and .Values.backend.enabled .Values.backend.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "ai-sre-agent.fullname" . }}-backend
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "ai-sre-agent.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "ai-sre-agent.fullname" . }}-backend
+  minReplicas: {{ .Values.backend.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.backend.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.backend.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.backend.autoscaling.targetMemoryUtilizationPercentage }}
+{{- end }}
+---
+# HPA for AI Engine
+{{- if and .Values.aiEngine.enabled .Values.aiEngine.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "ai-sre-agent.fullname" . }}-ai-engine
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "ai-sre-agent.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ai-engine
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "ai-sre-agent.fullname" . }}-ai-engine
+  minReplicas: {{ .Values.aiEngine.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.aiEngine.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.aiEngine.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.aiEngine.autoscaling.targetMemoryUtilizationPercentage }}
+{{- end }}

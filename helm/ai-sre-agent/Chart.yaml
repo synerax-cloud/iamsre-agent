@@ -1,0 +1,18 @@
+# Helm Chart for AI SRE Agent
+apiVersion: v2
+name: ai-sre-agent
+description: AI-Powered Kubernetes SRE Agent
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - sre
+  - ai
+  - kubernetes
+  - monitoring
+  - automation
+maintainers:
+  - name: AI SRE Team
+home: https://github.com/your-org/ai-sre-agent
+sources:
+  - https://github.com/your-org/ai-sre-agent

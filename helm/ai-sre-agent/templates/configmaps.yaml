@@ -1,0 +1,64 @@
+# ConfigMaps
+{{- if .Values.backend.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ai-sre-agent.fullname" . }}-backend-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "ai-sre-agent.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+data:
+  AI_ENGINE_URL: "http://{{ include "ai-sre-agent.fullname" . }}-ai-engine:8001"
+  COLLECTOR_URL: "http://{{ include "ai-sre-agent.fullname" . }}-collector:8002"
+  EXECUTOR_URL: "http://{{ include "ai-sre-agent.fullname" . }}-executor:8003"
+  {{- range $key, $value := .Values.backend.env }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+{{- end }}
+---
+{{- if .Values.aiEngine.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ai-sre-agent.fullname" . }}-ai-engine-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "ai-sre-agent.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ai-engine
+data:
+  OLLAMA_BASE_URL: "http://{{ include "ai-sre-agent.fullname" . }}-ollama:11434"
+  {{- range $key, $value := .Values.aiEngine.env }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+{{- end }}
+---
+{{- if .Values.collector.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ai-sre-agent.fullname" . }}-collector-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "ai-sre-agent.labels" . | nindent 4 }}
+    app.kubernetes.io/component: collector
+data:
+  {{- range $key, $value := .Values.collector.env }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+{{- end }}
+---
+{{- if .Values.executor.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ai-sre-agent.fullname" . }}-executor-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "ai-sre-agent.labels" . | nindent 4 }}
+    app.kubernetes.io/component: executor
+data:
+  {{- range $key, $value := .Values.executor.env }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+{{- end }}

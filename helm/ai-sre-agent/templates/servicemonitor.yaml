@@ -1,0 +1,75 @@
+# ServiceMonitor for Prometheus Operator
+{{- if .Values.monitoring.enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "ai-sre-agent.fullname" . }}-backend
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "ai-sre-agent.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  selector:
+    matchLabels:
+      {{- include "ai-sre-agent.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: backend
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "ai-sre-agent.fullname" . }}-ai-engine
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "ai-sre-agent.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ai-engine
+spec:
+  selector:
+    matchLabels:
+      {{- include "ai-sre-agent.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: ai-engine
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "ai-sre-agent.fullname" . }}-collector
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "ai-sre-agent.labels" . | nindent 4 }}
+    app.kubernetes.io/component: collector
+spec:
+  selector:
+    matchLabels:
+      {{- include "ai-sre-agent.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: collector
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "ai-sre-agent.fullname" . }}-executor
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "ai-sre-agent.labels" . | nindent 4 }}
+    app.kubernetes.io/component: executor
+spec:
+  selector:
+    matchLabels:
+      {{- include "ai-sre-agent.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: executor
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+{{- end }}

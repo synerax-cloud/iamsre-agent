@@ -1,0 +1,65 @@
+# Example Terraform Variables File
+# Copy this file to terraform.tfvars and fill in your values
+# DO NOT commit terraform.tfvars to version control
+
+# GCP Project Configuration
+project_id = "your-gcp-project-id"
+region     = "us-central1"
+environment = "prod"
+
+# Cluster Configuration
+cluster_name       = "ai-sre-agent"
+network_name       = "ai-sre-network"
+kubernetes_version = "1.28"
+
+# Node Pool Configuration
+node_pool_machine_type    = "n2-standard-4"
+ai_node_pool_machine_type = "n2-standard-8"
+min_node_count            = 1
+max_node_count            = 5
+disk_size_gb              = 100
+
+# Security Configuration
+master_authorized_networks = [
+  {
+    cidr_block   = "YOUR_IP_RANGE/32"  # Replace with your IP or VPN range
+    display_name = "Office Network"
+  },
+  # Add more networks as needed
+]
+
+enable_private_endpoint      = false
+enable_private_nodes         = true
+enable_workload_identity     = true
+enable_binary_authorization  = false
+
+# Database Configuration
+cloudsql_tier              = "db-custom-2-7680"
+cloudsql_disk_size         = 50
+cloudsql_availability_type = "REGIONAL"
+backup_retention_days      = 7
+
+# Sensitive Variables (use environment variables or secret management)
+# Option 1: Set via environment variables
+#   export TF_VAR_db_password="your-secure-password"
+#   export TF_VAR_openai_api_key="sk-..."  # Only needed if using OpenAI
+#   export TF_VAR_jwt_secret="your-jwt-secret"
+# 
+# Option 2: Store in terraform.tfvars (NOT recommended for production)
+db_password    = "CHANGE-ME-SECURE-PASSWORD"
+openai_api_key = ""  # Leave empty when using Ollama (self-hosted LLM)
+jwt_secret     = "CHANGE-ME-JWT-SECRET"
+
+# Optional Configuration
+domain_name              = ""  # e.g., "example.com" if you want DNS setup
+enable_gpu               = false
+enable_monitoring        = true
+artifact_retention_days  = 90
+
+# Labels
+labels = {
+  project     = "ai-sre-agent"
+  managed-by  = "terraform"
+  environment = "prod"
+  team        = "platform"
+}

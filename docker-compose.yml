@@ -1,0 +1,177 @@
+# Docker Compose for Local Development
+# Includes Ollama for self-hosted LLM
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: ai-sre-postgres
+    environment:
+      POSTGRES_DB: ai_sre_agent
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis (optional, for caching)
+  redis:
+    image: redis:7-alpine
+    container_name: ai-sre-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Ollama - Self-hosted LLM
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ai-sre-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+    # Uncomment for GPU support
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ai-sre-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=true
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/ai_sre_agent
+      - REDIS_URL=redis://redis:6379/0
+      - LLM_PROVIDER=ollama
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=llama3.1:8b
+      - OLLAMA_EMBEDDING_MODEL=nomic-embed-text
+      - SECRET_KEY=dev-secret-key-change-in-production
+      - JWT_SECRET=dev-jwt-secret-change-in-production
+      - K8S_IN_CLUSTER=false
+      - AUTH_ENABLED=false  # Disabled for local dev
+      - RATE_LIMIT_ENABLED=false  # Disabled for local dev
+    volumes:
+      - ./backend:/app
+      - vector_db_data:/data/vector_db
+      - ~/.kube:/root/.kube:ro  # For local k8s access
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # AI Engine Service
+  ai-engine:
+    build:
+      context: ./ai-engine
+      dockerfile: Dockerfile
+    container_name: ai-sre-ai-engine
+    ports:
+      - "8001:8001"
+    environment:
+      - LLM_PROVIDER=ollama
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=llama3.1:8b
+      - OLLAMA_EMBEDDING_MODEL=nomic-embed-text
+      - VECTOR_DB_PATH=/data/vector_db
+    volumes:
+      - ./ai-engine:/app
+      - vector_db_data:/data/vector_db
+    depends_on:
+      - ollama
+    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+
+  # Observability Collector
+  collector:
+    build:
+      context: ./collector
+      dockerfile: Dockerfile
+    container_name: ai-sre-collector
+    ports:
+      - "8002:8002"
+    environment:
+      - K8S_IN_CLUSTER=false
+    volumes:
+      - ./collector:/app
+      - ~/.kube:/root/.kube:ro
+    command: uvicorn main:app --host 0.0.0.0 --port 8002 --reload
+
+  # Action Executor
+  executor:
+    build:
+      context: ./executor
+      dockerfile: Dockerfile
+    container_name: ai-sre-executor
+    ports:
+      - "8003:8003"
+    environment:
+      - K8S_IN_CLUSTER=false
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/ai_sre_agent
+    volumes:
+      - ./executor:/app
+      - ~/.kube:/root/.kube:ro
+    depends_on:
+      - postgres
+    command: uvicorn main:app --host 0.0.0.0 --port 8003 --reload
+
+  # Frontend (React)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ai-sre-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+      - REACT_APP_WS_URL=ws://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm start
+
+volumes:
+  postgres_data:
+  redis_data:
+  ollama_data:
+  vector_db_data:
+
+networks:
+  default:
+    name: ai-sre-network

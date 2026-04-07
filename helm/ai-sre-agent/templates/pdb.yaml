@@ -1,0 +1,35 @@
+# PodDisruptionBudget for Backend
+{{- if .Values.backend.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "ai-sre-agent.fullname" . }}-backend
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "ai-sre-agent.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      {{- include "ai-sre-agent.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: backend
+{{- end }}
+---
+# PodDisruptionBudget for AI Engine
+{{- if .Values.aiEngine.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "ai-sre-agent.fullname" . }}-ai-engine
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "ai-sre-agent.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ai-engine
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      {{- include "ai-sre-agent.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: ai-engine
+{{- end }}

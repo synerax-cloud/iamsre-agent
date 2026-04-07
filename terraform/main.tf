@@ -408,22 +408,22 @@ module "iam" {
   # Workload Identity bindings
   workload_identity_bindings = {
     backend = {
-      service_account = "ai-sre-backend"
+      service_account = "backend"  # This should match the key in service_accounts map
       namespace       = "ai-sre-agent"
       ksa_name        = "backend"
     }
     ai-engine = {
-      service_account = "ai-sre-ai-engine"
+      service_account = "ai-engine"  # This should match the key in service_accounts map
       namespace       = "ai-sre-agent"
       ksa_name        = "ai-engine"
     }
     collector = {
-      service_account = "ai-sre-collector"
+      service_account = "collector"  # This should match the key in service_accounts map
       namespace       = "ai-sre-agent"
       ksa_name        = "collector"
     }
     executor = {
-      service_account = "ai-sre-executor"
+      service_account = "executor"  # This should match the key in service_accounts map
       namespace       = "ai-sre-agent"
       ksa_name        = "executor"
     }
@@ -493,15 +493,20 @@ resource "google_secret_manager_secret_version" "jwt_secret" {
 }
 
 # Grant secret access to service accounts
-resource "google_secret_manager_secret_iam_member" "backend_secrets" {
-  for_each = toset([
-    google_secret_manager_secret.db_password.id,
-    google_secret_manager_secret.jwt_secret.id,
-  ])
-  
-  secret_id = each.value
+resource "google_secret_manager_secret_iam_member" "backend_db_password" {
+  secret_id = google_secret_manager_secret.db_password.secret_id
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${module.iam.service_account_emails["backend"]}"
+  
+  depends_on = [google_secret_manager_secret.db_password]
+}
+
+resource "google_secret_manager_secret_iam_member" "backend_jwt_secret" {
+  secret_id = google_secret_manager_secret.jwt_secret.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${module.iam.service_account_emails["backend"]}"
+  
+  depends_on = [google_secret_manager_secret.jwt_secret]
 }
 
 resource "google_secret_manager_secret_iam_member" "ai_engine_secrets" {

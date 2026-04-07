@@ -211,6 +211,7 @@ output "helm_deploy_commands" {
 # Summary Output
 output "deployment_summary" {
   description = "Summary of deployed resources"
+  sensitive   = true  # Contains sensitive connection strings
   value = <<-EOT
     ========================================
     AI SRE Agent Infrastructure Deployed
